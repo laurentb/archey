@@ -26,6 +26,7 @@ output = [ 'User', 'Hostname', 'Distro', 'Kernel', 'Uptime', 'WindowManager', 'D
 
 colorDict = {
     'Arch Linux': ['\x1b[0;34m', '\x1b[1;34m'],
+    'Gentoo Linux': ['\x1b[0;34m', '\x1b[1;34m'],
     'Ubuntu': ['\x1b[0;31m', '\x1b[1;31m', '\x1b[0;33m'],
     'Debian': ['\x1b[0;31m', '\x1b[1;31m'],
     'Mint': ['\x1b[0;32m', '\x1b[1;37m'],
@@ -86,7 +87,31 @@ logosDict = {'Arch Linux': '''{color[1]}
 {color[0]}  ;####                 ####;   {results[15]}
 {color[0]}  ##'                     '##   {results[16]}
 {color[0]} #'                         `#  {results[17]}
-\x1b[0m'''
+\x1b[0m''',
+'Gentoo Linux': '''
+{color[0]}
+{color[0]}
+{color[0]}       __q@@@@m_              {color[1]}{results[0]}
+{color[0]}     _q@@@@@@@@@@_            {color[1]}{results[1]}
+{color[0]}    _@@@@@@@@@@@@@@m          {color[1]}{results[2]}
+{color[0]}   q@@@@@@@@@@@@@@@@@_        {color[1]}{results[3]}
+{color[0]}  _@@@@@@@@@@##@@@@@@@h       {color[1]}{results[4]}
+{color[0]}  @@@@@@@@@@@ ##@@@@@@@@_     {color[1]}{results[5]}
+{color[0]}  7##@@@@@@@___@@@@@@@@@@,    {color[1]}{results[6]}
+{color[0]}    ####@@@@@@@@@@@@@@@@@@    {color[1]}{results[7]}
+{color[0]}      ####@@@@@@@@@@@@@@@@    {color[1]}{results[8]}
+{color[0]}       q@@@@@@@@@@@@@@@@#W    {color[1]}{results[9]}
+{color[0]}      q@@@@@@@@@@@@@@@@@@/    {color[1]}{results[10]}
+{color[0]}    _@@@@@@@@@@@@@@@@#@@      {color[1]}{results[11]}
+{color[0]}   q@@@@@@@@@@@@@@@#@##^      {color[1]}{results[12]}
+{color[0]}  m#@@@@@@@@@@@@@@#@#W        {color[1]}{results[13]}
+{color[0]} _q@@@@@@@@@@@@@#@#*>         {color[1]}{results[14]}
+{color[0]}  p@@@@@@@@@@@#@##%           {color[1]}{results[15]}
+{color[0]}   _##@@@@@##@#@#g            {color[1]}{results[16]}
+{color[0]}     _#@@@@@@#@@              {color[1]}{results[17]}
+{color[0]}       _p@@@@q
+{color[0]}
+{color[0]} ''',
 }
 
 processes = str(subprocess.check_output(('ps', '-u', getuser(), '-o', 'comm',
@@ -99,14 +124,7 @@ class Output:
     results.extend(['']*(18-len(output)))
 
     def __init__(self):
-        self.distro = self.__detectDistro()
-
-    def __detectDistro(self):
-        if os.path.exists('/etc/pacman.conf'):
-            return 'Arch Linux'
-        else:
-            print('Unknow distribution', file=sys.stderr)
-            sys.exit(1)
+        self.distro = Distro.detect()
 
     def append(self, display):
         self.results.append('%s%s: %s%s' % (colorDict[self.distro][1], display.key, colorDict['Clear'][0], display.value))
@@ -127,10 +145,19 @@ class Hostname:
 
 class Distro:
     def __init__(self):
-        if os.path.exists('/etc/pacman.conf'):
-            distro =  'Arch Linux'
         self.key = 'Distro'
-        self.value = distro
+        self.value = Distro.detect()
+
+    @classmethod
+    def detect(cls):
+        if os.path.exists('/etc/pacman.conf'):
+            return 'Arch Linux'
+        elif os.path.exists('/etc/gentoo-release'):
+            return 'Gentoo Linux'
+        else:
+            print('Unknow distribution', file=sys.stderr)
+            sys.exit(1)
+
 
 class Kernel:
     def __init__(self):
@@ -189,8 +216,13 @@ class Terminal:
 
 class Packages:
     def __init__(self):
-        p1 = Popen(['pacman', '-Q'], stdout=PIPE).communicate()[0].decode("Utf-8")
-        packages = len(p1.rstrip('\n').split('\n'))
+        distro = Distro.detect()
+        if distro == 'Arch Linux':
+            p1 = Popen(['pacman', '-Q'], stdout=PIPE).communicate()[0].decode("utf-8")
+            packages = len(p1.rstrip('\n').split('\n'))
+        elif distro == 'Gentoo Linux':
+            p1 = Popen(['eix', '-Ic'], stdout=PIPE).communicate()[0].decode("utf-8")
+            packages = int(p1.rstrip('\n').split('\n')[-1].replace('Found ', '').replace(' matches.', ''))
         self.key = 'Packages'
         self.value = packages
 
