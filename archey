@@ -105,6 +105,7 @@ class Output:
         if os.path.exists('/etc/pacman.conf'):
             return 'Arch Linux'
         else:
+            print('Unknow distribution', file=sys.stderr)
             sys.exit(1)
 
     def append(self, display):
