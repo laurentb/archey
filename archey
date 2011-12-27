@@ -14,11 +14,9 @@
 # See http://www.gnu.org/licenses/gpl.txt for the full license text.
 
 # Import libraries
-import os, sys, subprocess, optparse, re, linecache
+import os, sys, subprocess, re
 from subprocess import Popen, PIPE
-from optparse import OptionParser
 from getpass import getuser
-from time import ctime, sleep
 
 #---------------Output---------------#
 
